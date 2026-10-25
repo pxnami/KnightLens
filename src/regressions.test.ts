@@ -124,6 +124,10 @@ describe("engine score regressions", () => {
     expect(result.loss).toBe(0);
     expect(result.accuracy).toBe(100);
   });
+  it("uses the latest exact score when a root move is updated at the same depth", () => {
+    const lines = ["info depth 16 score cp 20 pv e2e4", "info depth 16 score cp 30 pv e2e4"].map(line => parseInfo(line, 1)!);
+    expect(finishSearch(lines, "e2e4", new Chess().fen()).cp).toBe(30);
+  });
   it("compares the played move at the same root and keeps repetition history", async () => {
     const game = parseGame("1. a3 a6 *");
     const evaluate = vi

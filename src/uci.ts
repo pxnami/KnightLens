@@ -29,6 +29,7 @@ export function finishSearch(
 ): Position {
   const candidates = lines
     .filter((info) => info.best === best)
+    .reverse()
     .sort((a, b) => b.depth - a.depth);
   const result = candidates[0];
   if (!result)
