@@ -1,0 +1,33 @@
+{
+  "name": "knightlens",
+  "version": "1.0.0",
+  "description": "Bilingual chess game analysis with local Stockfish 18.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node scripts/prepare-engine.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/prepare-engine.mjs && tsc && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "keywords": [],
+  "author": "pxnami",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@fontsource/dm-sans": "^5.3.0",
+    "chess.js": "^1.4.0",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "stockfish": "18.0.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "type": "module"
+}
