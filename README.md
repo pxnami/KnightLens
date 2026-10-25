@@ -5,9 +5,9 @@
 
   **Chess, understood. Review your games with Stockfish 18 and a coach that explains each move.**
 
-  [![Open KnightLens](https://img.shields.io/badge/Open_KnightLens-C4D59B?style=for-the-badge&labelColor=191C1B)](https://pxnami.github.io/KnightLens/)
+  [![Open KnightLens](https://img.shields.io/badge/Open_KnightLens-81B64C?style=for-the-badge&labelColor=262522)](https://pxnami.github.io/KnightLens/)
   [![Source](https://img.shields.io/badge/View_source-30372E?style=for-the-badge)](https://github.com/pxnami/KnightLens)
-  [![Report issue](https://img.shields.io/badge/Report_issue-DCE0CE?style=for-the-badge&labelColor=191C1B)](https://github.com/pxnami/KnightLens/issues)
+  [![Report issue](https://img.shields.io/badge/Report_issue-DCE0CE?style=for-the-badge&labelColor=262522)](https://github.com/pxnami/KnightLens/issues)
 
   <sub>English & Deutsch · Local engine · No account or subscription</sub>
 </div>
@@ -26,6 +26,8 @@ Import a PGN or find your recent public games on Chess.com and Lichess. KnightLe
 | Browse up to 20 recent public games | Accuracy estimates for both players | Flip the board and show the best move |
 | Select games from multi-game PGN files | Position-based coach and engine continuations | Try legal moves and return to the game |
 | Chess.com and Lichess profiles | Clickable evaluation graph and category counts | Export the imported PGN |
+
+The interface follows the requested Chess.com review layout with Neo pieces, the Icy Sea board and a coach speech bubble. Artwork loads directly from official Chess.com image hosts and needs a network connection.
 
 ## Interface
 
@@ -65,7 +67,7 @@ npm run preview      # Preview production build
 
 | Area | Technology |
 | --- | --- |
-| Interface | React, TypeScript, DM Sans, Lucide |
+| Interface | React, TypeScript, Lucide, Chess.com-style review layout |
 | Chess rules and PGN | chess.js |
 | Evaluation | Stockfish.js 18, WebAssembly, Web Workers |
 | Build and checks | Vite, TypeScript, Vitest |

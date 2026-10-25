@@ -1,4 +1,5 @@
 import { categories, labels, type Game, type Lang, type Review } from "./chess";
+import { pieceImage } from "./theme";
 type Translate = (de: string, en: string) => string;
 type Props = {
   t: Translate;
@@ -29,6 +30,7 @@ export function Overview({
       <div className="accuracy">
         <div>
           <span>{white}</span>
+          <img className="summary-avatar" src={pieceImage("w", "p")} alt="" />
           <strong>
             {accuracy("w")}
             <small>%</small>
@@ -36,6 +38,7 @@ export function Overview({
         </div>
         <div>
           <span>{black}</span>
+          <img className="summary-avatar" src={pieceImage("b", "p")} alt="" />
           <strong>
             {accuracy("b")}
             <small>%</small>
@@ -51,48 +54,54 @@ export function Overview({
       <div className="category-heading">
         <span>{t("Zugqualität", "Move quality")}</span>
         <span>{t("Weiß", "White")}</span>
+        <span aria-hidden="true" />
         <span>{t("Schwarz", "Black")}</span>
       </div>
       {categories.map((category) => (
         <div className="category-row" key={category}>
-          <span>
-            <span className="badge" style={{ color: labels[category][3] }}>
-              {labels[category][2]}
-            </span>
-            {labels[category][lang === "de" ? 0 : 1]}
-          </span>
+          <span>{labels[category][lang === "de" ? 0 : 1]}</span>
           {["w", "b"].map((color) => (
-            <button
-              key={color}
-              disabled={
-                !reviews.some(
-                  (r, i) =>
-                    r.category === category && game?.moves[i].color === color,
-                )
-              }
-              onClick={() => {
-                const index = reviews.findIndex(
-                  (r, i) =>
-                    r.category === category &&
-                    game?.moves[i].color === color &&
-                    i >= ply,
-                );
-                const first = reviews.findIndex(
-                  (r, i) =>
-                    r.category === category && game?.moves[i].color === color,
-                );
-                changePly((index < 0 ? first : index) + 1);
-                setTab("moves");
-              }}
-              style={{ color: labels[category][3] }}
-            >
-              {
-                reviews.filter(
-                  (r, i) =>
-                    r.category === category && game?.moves[i].color === color,
-                ).length
-              }
-            </button>
+            <span className="category-score" key={color}>
+              {color === "b" && (
+                <span
+                  className="badge"
+                  style={{ background: labels[category][3] }}
+                >
+                  {labels[category][2]}
+                </span>
+              )}
+              <button
+                key={color}
+                disabled={
+                  !reviews.some(
+                    (r, i) =>
+                      r.category === category && game?.moves[i].color === color,
+                  )
+                }
+                onClick={() => {
+                  const index = reviews.findIndex(
+                    (r, i) =>
+                      r.category === category &&
+                      game?.moves[i].color === color &&
+                      i >= ply,
+                  );
+                  const first = reviews.findIndex(
+                    (r, i) =>
+                      r.category === category && game?.moves[i].color === color,
+                  );
+                  changePly((index < 0 ? first : index) + 1);
+                  setTab("moves");
+                }}
+                style={{ color: labels[category][3] }}
+              >
+                {
+                  reviews.filter(
+                    (r, i) =>
+                      r.category === category && game?.moves[i].color === color,
+                  ).length
+                }
+              </button>
+            </span>
           ))}
         </div>
       ))}

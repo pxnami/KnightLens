@@ -1,3 +1,6 @@
+import { Sidebar } from "./Sidebar";
+import { Coach } from "./Coach";
+import { pieceImage, themeAssets } from "./theme";
 import { ImportDialog } from "./ImportDialog";
 import { EvaluationGraph } from "./EvaluationGraph";
 import { Overview } from "./Overview";
@@ -6,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Chess, type Square } from "chess.js";
 import {
-  ArrowRight,
   ChevronFirst,
   ChevronLast,
   ChevronLeft,
@@ -15,22 +17,13 @@ import {
   Pause,
   RotateCw,
   Download,
-  Plus,
   BookOpen,
   ChartNoAxesCombined,
-  Lightbulb,
+  Settings,
   X,
-  ExternalLink,
-  GraduationCap,
 } from "lucide-react";
-import "@fontsource/dm-sans/400.css";
-import "@fontsource/dm-sans/500.css";
-import "@fontsource/dm-sans/600.css";
-import "@fontsource/dm-sans/700.css";
 import {
   classify,
-  coach,
-  lineSan,
   labels,
   type Game,
   type Lang,
@@ -40,6 +33,7 @@ import {
 import { Engine } from "./engine";
 
 import "./style.css";
+import "./chesscom.css";
 
 function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -54,7 +48,7 @@ function App() {
   const [ply, setPly] = useState(0),
     [flipped, setFlipped] = useState(false),
     [playing, setPlaying] = useState(false);
-  const [importing, setImporting] = useState(true),
+  const [importing, setImporting] = useState(false),
     [error, setError] = useState("");
   const [reviews, setReviews] = useState<Review[]>([]),
     [positions, setPositions] = useState<Position[]>([]),
@@ -62,6 +56,7 @@ function App() {
     [depth, setDepth] = useState(14),
     [progress, setProgress] = useState(0);
   const [fullEngine, setFullEngine] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [tab, setTab] = useState("moves"),
     [explaining, setExplaining] = useState(false),
     [showBest, setShowBest] = useState(false),
@@ -237,7 +232,7 @@ function App() {
     return (
       <span
         className="badge"
-        style={{ color: l[3] }}
+        style={{ background: l[3], color: "#fff" }}
         title={l[lang === "de" ? 0 : 1]}
       >
         {l[2]}
@@ -296,7 +291,7 @@ function App() {
   const player = (name: string, color: string) => (
     <div className="player">
       <div className={`player-piece ${color}`}>
-        <img src={`${import.meta.env.BASE_URL}pieces/${color}k.svg`} alt="" />
+        <img src={pieceImage(color, "p")} alt="" />
       </div>
       <div>
         <strong>{name}</strong>
@@ -312,63 +307,18 @@ function App() {
   );
   return (
     <>
-      <header>
-        <a className="brand" href={import.meta.env.BASE_URL}>
-          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" />
-          <span>
-            Knight<span className="muted-brand">Lens</span>
-          </span>
-        </a>
-        <div className="header-center">
-          <span className="status-dot" />
-          {t("Dein nächster besserer Zug.", "Your next better move.")}
-        </div>
-        <div className="header-actions">
-          <button
-            className="language"
-            onClick={() => setLang(lang === "de" ? "en" : "de")}
-            aria-label="Change language"
-          >
-            {lang === "de" ? "DE" : "EN"}
-            <span> / {lang === "de" ? "EN" : "DE"}</span>
-          </button>
-          <a
-            href="https://github.com/pxnami/KnightLens"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="GitHub"
-          >
-            <ExternalLink size={18} />
-          </a>
-        </div>
-      </header>
+      <Sidebar
+        lang={lang}
+        tab={tab}
+        setLang={setLang}
+        onImport={() => {
+          setImporting(true);
+          setError("");
+        }}
+        onMoves={() => setTab("moves")}
+        onOverview={() => setTab("overview")}
+      />
       <main>
-        <div className="page-heading">
-          <div>
-            <h1>
-              {t(
-                "Partie verstehen. Besser spielen.",
-                "Understand your game. Play better.",
-              )}
-            </h1>
-            <p>
-              {t(
-                "Jeder Zug erzählt etwas. Finde heraus, was.",
-                "Every move tells a story. Find yours.",
-              )}
-            </p>
-          </div>
-          <button
-            className="secondary"
-            onClick={() => {
-              setImporting(true);
-              setError("");
-            }}
-          >
-            <Plus size={17} />
-            {t("Partie importieren", "Import game")}
-          </button>
-        </div>
         <div className="workspace">
           <section
             className="board-column"
@@ -391,7 +341,10 @@ function App() {
                 />
                 <span>{score}</span>
               </div>
-              <div className="board">
+              <div
+                className={`board${flipped ? " flipped" : ""}`}
+                style={{ backgroundImage: `url(${themeAssets.board})` }}
+              >
                 {squares.map((sq, i) => {
                   const piece = board.get(sq);
                   return (
@@ -406,7 +359,7 @@ function App() {
                       {piece && (
                         <img
                           draggable={false}
-                          src={`${import.meta.env.BASE_URL}pieces/${piece.color}${piece.type}.svg`}
+                          src={pieceImage(piece.color, piece.type)}
                           alt={`${piece.color}${piece.type}`}
                         />
                       )}{" "}
@@ -485,48 +438,7 @@ function App() {
                   {t("Zurück zur Partie", "Back to game")}
                 </button>
               )}
-              <div className="playback">
-                <button
-                  disabled={!game || ply === 0}
-                  onClick={() => changePly(0)}
-                  aria-label={t("Anfang", "First")}
-                >
-                  <ChevronFirst size={19} />
-                </button>
-                <button
-                  disabled={!game || ply === 0}
-                  onClick={() => changePly(ply - 1)}
-                  aria-label={t("Zurück", "Previous")}
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button
-                  disabled={!game}
-                  className="play"
-                  onClick={() => {
-                    setVariation(undefined);
-                    if (ply === game?.moves.length) setPly(0);
-                    setPlaying(!playing);
-                  }}
-                  aria-label={playing ? "Pause" : "Play"}
-                >
-                  {playing ? <Pause size={18} /> : <Play size={18} />}
-                </button>
-                <button
-                  disabled={!game || ply === game.moves.length}
-                  onClick={() => changePly(ply + 1)}
-                  aria-label={t("Weiter", "Next")}
-                >
-                  <ChevronRight size={20} />
-                </button>
-                <button
-                  disabled={!game || ply === game.moves.length}
-                  onClick={() => changePly(game?.moves.length || 0)}
-                  aria-label={t("Ende", "Last")}
-                >
-                  <ChevronLast size={19} />
-                </button>
-              </div>
+
               <button
                 disabled={!game}
                 onClick={download}
@@ -546,115 +458,65 @@ function App() {
               </span>
             </div>
           </section>
-          <aside className="analysis-panel">
+          <aside className="analysis-panel" data-view={tab}>
             <div className="panel-heading">
-              <h2>{t("Partieanalyse", "Game analysis")}</h2>
-              <span className="engine-tag">
-                Stockfish 18 <span>{fullEngine ? "NNUE" : "Lite"}</span>
-              </span>
-            </div>
-            <div className="coach">
-              <div className="coach-header">
-                <div className="coach-icon">
-                  <GraduationCap size={23} />
-                </div>
-                <div>
-                  <strong>{t("Dein Coach", "Your coach")}</strong>
-                  <small>
-                    {t("Ein Zug. Eine Erkenntnis.", "One move. One insight.")}
-                  </small>
-                </div>
-                {review && badge(review)}
-              </div>
-              <h3>
-                {move
-                  ? `${Math.ceil(ply / 2)}${move.color === "b" ? "..." : "."} ${move.san}`
-                  : t("Schauen wir genauer hin.", "Let’s take a closer look.")}
-              </h3>
-              <p>
-                {coach(
-                  game || { moves: [], fens: [], headers: {}, pgn: "" },
-                  ply - 1,
-                  review,
-                  lang,
-                )}
-              </p>
-              {review && (
-                <>
-                  <button
-                    className="text-button"
-                    onClick={() => setExplaining(!explaining)}
-                  >
-                    <Lightbulb size={15} />
-                    {explaining
-                      ? t("Weniger anzeigen", "Show less")
-                      : t("Fortsetzung erklären", "Explain continuation")}
-                    <ArrowRight size={15} />
-                  </button>
-                  {explaining && (
-                    <div className="explanation">
-                      <strong>
-                        {t(
-                          "Beste Idee vor diesem Zug",
-                          "Best idea before this move",
-                        )}
-                      </strong>
-                      <p>{lineSan(move!.before, review.before.pv)}</p>
-                      <span>
-                        {t("Stockfish-Tiefe", "Stockfish depth")}{" "}
-                        {review.before.depth} ·{" "}
-                        {t(
-                          "Bewertung nach dem Zug",
-                          "Evaluation after the move",
-                        )}
-                        : {score}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            <label className="engine-choice">
-              <input
-                type="checkbox"
-                checked={fullEngine}
-                disabled={busy}
-                onChange={(e) => setFullEngine(e.target.checked)}
-              />
-              {t(
-                "Volle NNUE-Engine laden (113 MB)",
-                "Load full NNUE engine (113 MB)",
-              )}
-            </label>
-            <div className="analysis-controls">
-              <label>
-                {t("Analysetiefe", "Analysis depth")}
-                <select
-                  value={depth}
-                  disabled={busy}
-                  onChange={(e) => setDepth(Number(e.target.value))}
-                >
-                  <option value={12}>12 · {t("Schnell", "Quick")}</option>
-                  <option value={14}>14 · {t("Standard", "Standard")}</option>
-                  <option value={18}>18 · {t("Gründlich", "Deep")}</option>
-                  <option value={22}>
-                    22 · {t("Sehr gründlich", "Very deep")}
-                  </option>
-                </select>
-              </label>
+              <ChartNoAxesCombined size={20} />
+              <h2>{t("Partieanalyse", "Game review")}</h2>
               <button
-                className="primary analyze"
-                disabled={!game}
-                onClick={busy ? cancel : analyze}
+                className="settings-button"
+                onClick={() => setShowSettings(!showSettings)}
+                aria-expanded={showSettings}
+                aria-label={t("Analyseeinstellungen", "Analysis settings")}
               >
-                {busy ? <X size={17} /> : <ChartNoAxesCombined size={17} />}{" "}
-                {busy
-                  ? t("Stoppen", "Stop")
-                  : reviews.length
-                    ? t("Neu analysieren", "Analyze again")
-                    : t("Analyse starten", "Start analysis")}
+                <Settings size={18} />
               </button>
             </div>
+            <Coach
+              game={game}
+              ply={ply}
+              review={review}
+              lang={lang}
+              score={score}
+              variation={variation?.san}
+              explaining={explaining}
+              setExplaining={setExplaining}
+              onNext={() => changePly(ply + 1)}
+            />
+            {showSettings && (
+              <div className="engine-settings">
+                <label className="engine-choice">
+                  <input
+                    type="checkbox"
+                    checked={fullEngine}
+                    disabled={busy}
+                    onChange={(e) => setFullEngine(e.target.checked)}
+                  />
+                  {t(
+                    "Volle NNUE-Engine laden (113 MB)",
+                    "Load full NNUE engine (113 MB)",
+                  )}
+                </label>
+                <div className="analysis-controls">
+                  <label>
+                    {t("Analysetiefe", "Analysis depth")}
+                    <select
+                      value={depth}
+                      disabled={busy}
+                      onChange={(e) => setDepth(Number(e.target.value))}
+                    >
+                      <option value={12}>12 · {t("Schnell", "Quick")}</option>
+                      <option value={14}>
+                        14 · {t("Standard", "Standard")}
+                      </option>
+                      <option value={18}>18 · {t("Gründlich", "Deep")}</option>
+                      <option value={22}>
+                        22 · {t("Sehr gründlich", "Very deep")}
+                      </option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            )}{" "}
             {busy && (
               <div className="progress" role="status">
                 <div style={{ width: `${progress * 100}%` }} />
@@ -719,6 +581,65 @@ function App() {
               ply={ply}
               changePly={changePly}
             />
+            <div className="review-playback">
+              <div className="playback">
+                <button
+                  disabled={!game || ply === 0}
+                  onClick={() => changePly(0)}
+                  aria-label={t("Anfang", "First")}
+                >
+                  <ChevronFirst size={19} />
+                </button>
+                <button
+                  disabled={!game || ply === 0}
+                  onClick={() => changePly(ply - 1)}
+                  aria-label={t("Zurück", "Previous")}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  disabled={!game}
+                  className="play"
+                  onClick={() => {
+                    setVariation(undefined);
+                    if (ply === game?.moves.length) setPly(0);
+                    setPlaying(!playing);
+                  }}
+                  aria-label={playing ? "Pause" : "Play"}
+                >
+                  {playing ? <Pause size={18} /> : <Play size={18} />}
+                </button>
+                <button
+                  disabled={!game || ply === game.moves.length}
+                  onClick={() => changePly(ply + 1)}
+                  aria-label={t("Weiter", "Next")}
+                >
+                  <ChevronRight size={20} />
+                </button>
+                <button
+                  disabled={!game || ply === game.moves.length}
+                  onClick={() => changePly(game?.moves.length || 0)}
+                  aria-label={t("Ende", "Last")}
+                >
+                  <ChevronLast size={19} />
+                </button>
+              </div>
+            </div>
+            <div className="review-start">
+              {" "}
+              <button
+                className="primary analyze"
+                disabled={!game}
+                onClick={busy ? cancel : analyze}
+              >
+                {busy ? <X size={17} /> : <ChartNoAxesCombined size={17} />}{" "}
+                {busy
+                  ? t("Stoppen", "Stop")
+                  : reviews.length
+                    ? t("Neu analysieren", "Analyze again")
+                    : t("Analyse starten", "Start analysis")}
+              </button>
+            </div>{" "}
           </aside>
         </div>
         <footer>
@@ -745,7 +666,7 @@ function App() {
         <ImportDialog
           lang={lang}
           setLang={setLang}
-          canClose={!!game}
+          canClose={true}
           onClose={() => setImporting(false)}
           onLoad={load}
         />

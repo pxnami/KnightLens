@@ -1,67 +1,133 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-25T16:29:43.0568134Z",
+  "generatedAt": "2026-10-25T16:53:22.4352583Z",
   "title": "Design System: KnightLens",
   "extensions": {
     "shadows": [
       {
-        "value": "0 12px 35px #0003",
-        "purpose": "Soft lift beneath the chessboard.",
-        "name": "board"
+        "name": "primary-edge",
+        "value": "0 3px 0 #48732e",
+        "purpose": "Tactile lower edge on green primary actions."
       },
       {
-        "value": "0 25px 80px #0006",
-        "purpose": "Separate the import dialog from the workspace.",
-        "name": "dialog"
+        "name": "dialog",
+        "value": "0 14px 50px #0008",
+        "purpose": "Separate the import dialog from the dark backdrop."
       }
     ],
     "motion": [
       {
+        "name": "control-state",
         "value": "background 0.16s, color 0.16s",
-        "purpose": "Button state feedback; disabled by reduced-motion preference.",
-        "name": "control-state"
+        "purpose": "Control feedback; disabled under reduced motion."
       },
       {
+        "name": "evaluation",
         "value": "height 0.4s",
-        "purpose": "Evaluation bar changes; disabled by reduced-motion preference.",
-        "name": "evaluation"
+        "purpose": "Evaluation bar updates; disabled under reduced motion."
       }
     ],
     "breakpoints": [
       {
-        "name": "mobile-stack",
-        "value": "760px"
+        "name": "wide-desktop",
+        "value": "1700px"
       },
       {
         "name": "compact-desktop",
-        "value": "1000px"
+        "value": "1200px"
       },
       {
-        "name": "wide-desktop",
-        "value": "1500px"
+        "name": "icon-sidebar",
+        "value": "960px"
+      },
+      {
+        "name": "mobile-stack",
+        "value": "760px"
       }
-    ]
+    ],
+    "boardTreatment": {
+      "source": "Official Icy Sea board asset from src/theme.ts",
+      "filter": "brightness(0.7) contrast(2.2) saturate(1.7)",
+      "target": "Board background pseudo-element only",
+      "stacking": "z-index: -1",
+      "pointerEvents": "none",
+      "flippedTransform": "rotate(180deg)",
+      "purpose": "Match the supplied deep-blue reference while preserving unfiltered Neo pieces, badges and coordinates."
+    }
   },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tactile green analysis and next actions.",
+      "html": "<button class=\"ds-primary\">Start analysis</button>",
+      "css": ".ds-primary{font:700 14px Arial,Helvetica,sans-serif;background:linear-gradient(#87bb50,#659b3e);color:#fff;padding:12px 16px;border:0;border-radius:4px;box-shadow:0 3px 0 #48732e;cursor:pointer}.ds-primary:hover{background:linear-gradient(#98ca60,#76ad4c)}.ds-primary:active{box-shadow:none}.ds-primary:focus-visible,.ds-secondary:focus-visible,.ds-field:focus-visible,.ds-nav-item:focus-visible{outline:2px solid #81b64c;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "description": "Compact explanation action.",
+      "html": "<button class=\"ds-secondary\">Explain</button>",
+      "css": ".ds-secondary{font:700 12px Arial,Helvetica,sans-serif;background:linear-gradient(#45443f,#373632);color:#dddcd8;padding:11px 14px;border:0;border-radius:4px;cursor:pointer}.ds-secondary:hover{background:#403e3b}.ds-primary:focus-visible,.ds-secondary:focus-visible,.ds-field:focus-visible,.ds-nav-item:focus-visible{outline:2px solid #81b64c;outline-offset:3px}"
+    },
+    {
+      "name": "Import field",
+      "kind": "input",
+      "description": "Inset profile-name or PGN field.",
+      "html": "<label class=\"ds-label\">Username <input class=\"ds-field\" placeholder=\"Chess.com username\"></label>",
+      "css": ".ds-label{font:13px Arial,Helvetica,sans-serif;color:#dedbd4;display:grid;gap:8px}.ds-field{font:13px Arial,Helvetica,sans-serif;background:#1e1d1b;color:#fff;border:1px solid #5b5750;border-radius:4px;padding:12px;caret-color:#a4cf70}.ds-field::placeholder{color:#aaa69e}.ds-field:hover{border-color:#aaa7a2}.ds-primary:focus-visible,.ds-secondary:focus-visible,.ds-field:focus-visible,.ds-nav-item:focus-visible{outline:2px solid #81b64c;outline-offset:3px}"
+    },
+    {
+      "name": "Sidebar navigation",
+      "kind": "nav",
+      "description": "Charcoal navigation with a selected review item.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item\" aria-current=\"page\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 3v18h18M7 14l4-4 4 2 6-8\"/></svg>Analyze</button></nav>",
+      "css": ".ds-nav{background:#262522;padding:10px;width:156px}.ds-nav-item{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 8px;background:#1d1c1a;color:white;border:0;border-radius:4px;font:700 14px Arial,Helvetica,sans-serif;cursor:pointer}.ds-nav-item svg{color:#95c05c}.ds-nav-item:hover{background:#403e3b}.ds-primary:focus-visible,.ds-secondary:focus-visible,.ds-field:focus-visible,.ds-nav-item:focus-visible{outline:2px solid #81b64c;outline-offset:3px}"
+    },
+    {
+      "name": "Move quality badge",
+      "kind": "chip",
+      "description": "Circular annotation; its symbol accompanies the color.",
+      "html": "<span class=\"ds-quality\" aria-label=\"Best move\">★</span>",
+      "css": ".ds-quality{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#81b64c;color:#fff;border-radius:50%;font:800 12px Arial,Helvetica,sans-serif}"
+    },
+    {
+      "name": "Coach speech bubble",
+      "kind": "card",
+      "refersTo": "coach-bubble",
+      "description": "White position-linked coaching surface, shown without the externally hosted avatar.",
+      "html": "<section class=\"ds-bubble\"><strong>Your coach</strong><p>Position-specific engine feedback appears here.</p></section>",
+      "css": ".ds-bubble{position:relative;background:#fff;color:#262522;border-radius:10px;padding:13px 14px;max-width:260px;font:13px/1.5 Arial,Helvetica,sans-serif}.ds-bubble:before{content:\"\";position:absolute;left:-12px;bottom:24px;border-top:10px solid transparent;border-bottom:2px solid transparent;border-right:13px solid #fff}.ds-bubble strong{font-size:12px;font-weight:500}.ds-bubble p{margin:7px 0 0}"
+    }
+  ],
   "narrative": {
-    "overview": "User-pinned chess review workbench: board left, coach and notation right; mobile stack. Independent sage and charcoal identity.",
+    "northStar": "The Chess Review Desk",
+    "overview": "The user-approved Chess.com screenshot is the visual authority: a dense charcoal workspace, a large blue Icy Sea board with Neo pieces, and a compact review panel. KnightLens retains its name, German and English interface, and independent engine-derived analysis.\n\nThe white coach speech bubble and green actions establish the hierarchy. Official Chess.com-hosted Neo, Icy Sea, and Danny coach assets provide the visual references; no generated artwork substitutes for them.",
     "keyCharacteristics": [
-      "German and English interface",
-      "Compact notation and position-linked coaching",
-      "Self-hosted DM Sans"
+      "Charcoal navigation and review surfaces.",
+      "Blue board with full-cell Neo pieces.",
+      "White coaching bubble, compact notation, and green actions.",
+      "Arial and Helvetica typography intentionally pinned to the screenshot."
     ],
     "rules": [
       {
-        "body": "Selecting a move updates board, evaluation, coach and best-move arrow together. The amber SVG arrow overlays the board without intercepting pointer input and follows board orientation.",
-        "section": "components",
-        "name": "Position context"
+        "name": "The Position Color Rule",
+        "body": "Move-quality colors always accompany symbols or labels; color alone must not carry the evaluation.",
+        "section": "colors"
       }
     ],
     "dos": [
-      "Keep analysis uncertainty visible.",
-      "Honor reduced motion and keyboard navigation."
+      "Do follow the approved screenshot's charcoal, blue board, white bubble, and green action hierarchy.",
+      "Do preserve KnightLens branding and German and English copy.",
+      "Do retain keyboard navigation, visible focus, and reduced-motion behavior.",
+      "Do keep coaching and classifications tied to actual engine output."
     ],
     "donts": [
-      "Never populate fake evaluations or imply Chess.com score compatibility."
+      "Don't restore the superseded sage palette or DM Sans typography.",
+      "Don't substitute generated artwork for the official hosted Neo, Icy Sea, or coach assets.",
+      "Don't add decorative glass, glows, or repetitive cards to the review workspace.",
+      "Don't populate fake evaluations or imply exact compatibility with proprietary Chess.com scores."
     ]
   }
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BookOpen } from "lucide-react";
 import type { Game, Review, Position } from "./chess";
+import { pieceImage } from "./theme";
 type Translate = (de: string, en: string) => string;
 type Props = {
   t: Translate;
@@ -53,7 +54,23 @@ export function MoveList({
                     ) : (
                       <span className="unrated" />
                     )}
-                    <strong>{game.moves[index].san}</strong>
+                    <strong>
+                      {/^[KQRBN]/.test(game.moves[index].san) ? (
+                        <>
+                          <img
+                            className="notation-piece"
+                            src={pieceImage(
+                              game.moves[index].color,
+                              game.moves[index].piece,
+                            )}
+                            alt={game.moves[index].san[0]}
+                          />
+                          {game.moves[index].san.slice(1)}
+                        </>
+                      ) : (
+                        game.moves[index].san
+                      )}
+                    </strong>
                     {positions[index + 1] && (
                       <small>
                         {(positions[index + 1].cp / 100).toFixed(1)}

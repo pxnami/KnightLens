@@ -31,14 +31,14 @@ export function EvaluationGraph({
           x2="400"
           y1="42.5"
           y2="42.5"
-          stroke="#5a625a"
+          stroke="#c6c6c6"
           strokeDasharray="3 4"
         />
         {positions.length > 1 && (
           <>
             <path
               d={`M 0 42.5 ${positions.map((p, i) => `L ${(i / (positions.length - 1)) * 400} ${42.5 - Math.tanh(p.cp / 500) * 37}`).join(" ")} L 400 42.5 Z`}
-              fill="#c4d59b"
+              fill="#444"
               opacity=".1"
             />
             <polyline
@@ -49,7 +49,7 @@ export function EvaluationGraph({
                 )
                 .join(" ")}
               fill="none"
-              stroke="#c4d59b"
+              stroke="#444"
               strokeWidth="2"
             />
             {positions.map((p, i) => (
@@ -75,7 +75,7 @@ export function EvaluationGraph({
           </>
         )}
         {positions.length < 2 && (
-          <text x="200" y="66" textAnchor="middle" fill="#a1a89e" fontSize="11">
+          <text x="200" y="66" textAnchor="middle" fill="#666" fontSize="11">
             {t(
               "Starte die Analyse, um den Verlauf zu sehen.",
               "Start analysis to see the evaluation.",

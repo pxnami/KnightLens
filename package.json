@@ -14,7 +14,6 @@
   "author": "pxnami",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@fontsource/dm-sans": "^5.3.0",
     "chess.js": "^1.4.0",
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",

@@ -14,16 +14,16 @@ export const categories = [
 ] as const;
 export type Category = (typeof categories)[number];
 export const labels: Record<Category, [string, string, string, string]> = {
-  brilliant: ["Brillant", "Brilliant", "!!", "#53cbbb"],
-  great: ["Großartig", "Great", "!", "#79b5df"],
-  book: ["Theorie", "Book", "B", "#d6ad82"],
-  best: ["Am besten", "Best", "★", "#b4d47a"],
-  excellent: ["Exzellent", "Excellent", "+", "#a3c47a"],
-  good: ["Gut", "Good", "✓", "#a5b793"],
-  inaccuracy: ["Ungenau", "Inaccuracy", "?!", "#edcf68"],
-  mistake: ["Fehler", "Mistake", "?", "#eea461"],
-  miss: ["Verpasst", "Miss", "×", "#ee8d82"],
-  blunder: ["Patzer", "Blunder", "??", "#ec6969"],
+  brilliant: ["Brillant", "Brilliant", "!!", "#1baca6"],
+  great: ["Großartig", "Great", "!", "#749bbf"],
+  book: ["Theorie", "Book", "B", "#d5a279"],
+  best: ["Am besten", "Best", "★", "#81b64c"],
+  excellent: ["Exzellent", "Excellent", "+", "#81b64c"],
+  good: ["Gut", "Good", "✓", "#95b776"],
+  inaccuracy: ["Ungenau", "Inaccuracy", "?!", "#f7c631"],
+  mistake: ["Fehler", "Mistake", "?", "#ffa459"],
+  miss: ["Verpasst", "Miss", "×", "#ff7769"],
+  blunder: ["Patzer", "Blunder", "??", "#fa412d"],
 };
 export type Position = {
   cp: number;
