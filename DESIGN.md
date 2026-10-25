@@ -17,7 +17,8 @@ typography:
   heading:
     fontFamily: "DM Sans, sans-serif"
     fontWeight: 500
-    letterSpacing: "-0.03em"
+    fontSize: "25px"
+    letterSpacing: "-0.7px"
 rounded:
   control: "5px"
   panel: "8px"

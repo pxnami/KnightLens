@@ -1,1 +1,67 @@
-{"name":"KnightLens","mode":"operate","tokens":{"background":"#191c1b","surface":"#222623","coach":"#293126","accent":"#c4d59b","text":"#eceee8","muted":"#a4ada3","boardLight":"#dce0ce","boardDark":"#72866a","font":"DM Sans","panelRadius":"8px","controlRadius":"5px","mobileBreakpoint":"760px"},"direction":"User-pinned chess review workbench: board left, coach and notation right; mobile stack.","signatureInteraction":"Selecting a move updates board, evaluation, coach and best-move arrow together."}
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T16:29:43.0568134Z",
+  "title": "Design System: KnightLens",
+  "extensions": {
+    "shadows": [
+      {
+        "value": "0 12px 35px #0003",
+        "purpose": "Soft lift beneath the chessboard.",
+        "name": "board"
+      },
+      {
+        "value": "0 25px 80px #0006",
+        "purpose": "Separate the import dialog from the workspace.",
+        "name": "dialog"
+      }
+    ],
+    "motion": [
+      {
+        "value": "background 0.16s, color 0.16s",
+        "purpose": "Button state feedback; disabled by reduced-motion preference.",
+        "name": "control-state"
+      },
+      {
+        "value": "height 0.4s",
+        "purpose": "Evaluation bar changes; disabled by reduced-motion preference.",
+        "name": "evaluation"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-stack",
+        "value": "760px"
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1000px"
+      },
+      {
+        "name": "wide-desktop",
+        "value": "1500px"
+      }
+    ]
+  },
+  "narrative": {
+    "overview": "User-pinned chess review workbench: board left, coach and notation right; mobile stack. Independent sage and charcoal identity.",
+    "keyCharacteristics": [
+      "German and English interface",
+      "Compact notation and position-linked coaching",
+      "Self-hosted DM Sans"
+    ],
+    "rules": [
+      {
+        "body": "Selecting a move updates board, evaluation, coach and best-move arrow together. The amber SVG arrow overlays the board without intercepting pointer input and follows board orientation.",
+        "section": "components",
+        "name": "Position context"
+      }
+    ],
+    "dos": [
+      "Keep analysis uncertainty visible.",
+      "Honor reduced motion and keyboard navigation."
+    ],
+    "donts": [
+      "Never populate fake evaluations or imply Chess.com score compatibility."
+    ]
+  }
+}
