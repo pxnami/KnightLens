@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { BookOpen } from "lucide-react";
-import type { Game, Review, Position } from "./chess";
+import {
+  formatEvaluation,
+  type Game,
+  type Review,
+  type Position,
+} from "./chess";
 import { pieceImage } from "./theme";
 type Translate = (de: string, en: string) => string;
 type Props = {
@@ -72,9 +77,7 @@ export function MoveList({
                       )}
                     </strong>
                     {positions[index + 1] && (
-                      <small>
-                        {(positions[index + 1].cp / 100).toFixed(1)}
-                      </small>
+                      <small>{formatEvaluation(positions[index + 1])}</small>
                     )}
                   </button>
                 ) : (

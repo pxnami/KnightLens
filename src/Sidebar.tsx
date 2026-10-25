@@ -30,7 +30,14 @@ export function Sidebar({
   const t = (de: string, en: string) => (lang === "de" ? de : en);
   return (
     <header className="sidebar">
-      <a className="brand" href={import.meta.env.BASE_URL}>
+      <a
+        className="brand"
+        href={import.meta.env.BASE_URL}
+        onClick={(event) => {
+          event.preventDefault();
+          onMoves();
+        }}
+      >
         <img src={pieceImage("w", "p")} alt="" />
         <span>KnightLens</span>
       </a>

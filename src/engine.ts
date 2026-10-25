@@ -1,89 +1,107 @@
 import type { Position } from "./chess";
+import { parseInfo, finishSearch, type UciInfo } from "./uci";
+export type SearchOptions = {
+  initialFen?: string;
+  moves?: string[];
+  searchMoves?: string[];
+};
 export class Engine {
   private worker: Worker;
-  private reject?: (reason: Error) => void;
   private disposed = false;
-  constructor(full = false) {
+  private pending?: {
+    line: (line: string) => void;
+    reject: (error: Error) => void;
+    timer: ReturnType<typeof setTimeout>;
+  };
+  constructor(full = true) {
     this.worker = new Worker(
       `${import.meta.env.BASE_URL}engine/stockfish-18-${full ? "single" : "lite-single"}.js`,
     );
+    this.worker.onmessage = (event) => {
+      for (const line of String(event.data).split(/\r?\n/))
+        this.pending?.line(line.trim());
+    };
+    this.worker.onerror = () =>
+      this.stop(new Error("Stockfish worker failed to load or crashed"));
   }
   async init() {
-    await this.waitFor("uciok", "uci");
-    this.worker.postMessage("setoption name Hash value 32");
-    this.worker.postMessage("setoption name MultiPV value 2");
-    await this.waitFor("readyok", "isready");
+    await this.exchange(
+      ["uci"],
+      (line) => (line === "uciok" ? true : undefined),
+      120000,
+    );
+    await this.exchange(
+      [
+        "setoption name Hash value 64",
+        "setoption name MultiPV value 2",
+        "ucinewgame",
+        "isready",
+      ],
+      (line) => (line === "readyok" ? true : undefined),
+      120000,
+    );
   }
-  private waitFor(expected: string, command: string) {
-    return new Promise<void>((resolve, reject) => {
-      this.reject = reject;
-      const timer = setTimeout(() => {
-        this.stop();
-        reject(new Error("Engine initialization timed out"));
-      }, 45000);
-      this.worker.onmessage = (e) => {
-        if (String(e.data).includes(expected)) {
-          clearTimeout(timer);
-          this.reject = undefined;
-          resolve();
-        }
-      };
-      this.worker.onerror = () => {
-        clearTimeout(timer);
-        reject(new Error("Stockfish could not load"));
-      };
-      this.worker.postMessage(command);
-    });
-  }
-  evaluate(fen: string, depth: number): Promise<Position> {
+  private exchange<T>(
+    commands: string[],
+    parse: (line: string) => T | undefined,
+    timeout: number,
+  ): Promise<T> {
     if (this.disposed) return Promise.reject(new Error("cancelled"));
-    const sign = fen.split(" ")[1] === "w" ? 1 : -1;
-    return new Promise((resolve, reject) => {
-      this.reject = reject;
-      const scores = new Map<number, Position>();
-      const timer = setTimeout(() => {
-        this.stop();
-        reject(new Error("Position analysis timed out"));
-      }, 90000);
-      this.worker.onerror = () => {
-        clearTimeout(timer);
-        reject(new Error("Stockfish worker failed"));
+    if (this.pending)
+      return Promise.reject(new Error("Stockfish search already in progress"));
+    return new Promise<T>((resolve, reject) => {
+      const complete = (error?: Error, value?: T) => {
+        if (!this.pending) return;
+        clearTimeout(this.pending.timer);
+        this.pending = undefined;
+        if (error) reject(error);
+        else resolve(value as T);
       };
-      this.worker.onmessage = (e) => {
-        const line = String(e.data);
-        const score = line.match(/score (cp|mate) (-?\d+)/),
-          pv = line.match(/ pv (.+)/),
-          d = line.match(/depth (\d+)/),
-          multi = line.match(/multipv (\d+)/);
-        if (score && pv && d && !line.includes("bound")) {
-          const value = Number(score[2]);
-          scores.set(Number(multi?.[1] || 1), {
-            cp:
-              (score[1] === "mate"
-                ? Math.sign(value) * (10000 - Math.abs(value))
-                : value) * sign,
-            mate: score[1] === "mate" ? value * sign : undefined,
-            best: pv[1].split(" ")[0],
-            pv: pv[1].split(" "),
-            depth: Number(d[1]),
-          });
-        }
-        if (line.startsWith("bestmove")) {
-          clearTimeout(timer);
-          this.reject = undefined;
-          const result = scores.get(1);
-          if (result) resolve({ ...result, second: scores.get(2)?.cp });
-          else reject(new Error("Engine returned no evaluation"));
-        }
+      const timer = setTimeout(
+        () => this.stop(new Error("Stockfish did not respond in time")),
+        timeout,
+      );
+      this.pending = {
+        timer,
+        reject: (error) => complete(error),
+        line: (line) => {
+          try {
+            const result = parse(line);
+            if (result !== undefined) complete(undefined, result);
+          } catch (error) {
+            complete(error instanceof Error ? error : new Error(String(error)));
+          }
+        },
       };
-      this.worker.postMessage(`position fen ${fen}`);
-      this.worker.postMessage(`go depth ${depth}`);
+      for (const command of commands) this.worker.postMessage(command);
     });
   }
-  stop() {
+  evaluate(
+    fen: string,
+    depth: number,
+    options: SearchOptions = {},
+  ): Promise<Position> {
+    const sign = fen.split(" ")[1] === "w" ? 1 : -1;
+    const lines: UciInfo[] = [];
+    const position = options.initialFen
+      ? `position fen ${options.initialFen}${options.moves?.length ? ` moves ${options.moves.join(" ")}` : ""}`
+      : `position fen ${fen}`;
+    const search = `go depth ${depth}${options.searchMoves?.length ? ` searchmoves ${options.searchMoves.join(" ")}` : ""}`;
+    return this.exchange(
+      [position, search],
+      (line) => {
+        const info = parseInfo(line, sign);
+        if (info) lines.push(info);
+        if (line.startsWith("bestmove "))
+          return finishSearch(lines, line.split(/\s+/)[1], fen);
+      },
+      90000,
+    );
+  }
+  stop(reason = new Error("cancelled")) {
+    if (this.disposed) return;
     this.disposed = true;
+    this.pending?.reject(reason);
     this.worker.terminate();
-    this.reject?.(new Error("cancelled"));
-    this.reject = undefined;
   }
 }

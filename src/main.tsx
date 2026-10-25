@@ -23,7 +23,8 @@ import {
   X,
 } from "lucide-react";
 import {
-  classify,
+  parseGame,
+  formatEvaluation,
   labels,
   type Game,
   type Lang,
@@ -31,10 +32,19 @@ import {
   type Position,
 } from "./chess";
 import { Engine } from "./engine";
+import { analyzeGame } from "./analysis";
 
 import "./style.css";
 import "./chesscom.css";
 
+function restoreGame(): Game | undefined {
+  try {
+    const pgn = sessionStorage.getItem("knightlens-game");
+    return pgn ? parseGame(pgn) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 function App() {
   const [lang, setLang] = useState<Lang>(() => {
     try {
@@ -44,7 +54,7 @@ function App() {
     }
   });
   const t = (de: string, en: string) => (lang === "de" ? de : en);
-  const [game, setGame] = useState<Game>();
+  const [game, setGame] = useState<Game | undefined>(restoreGame);
   const [ply, setPly] = useState(0),
     [flipped, setFlipped] = useState(false),
     [playing, setPlaying] = useState(false);
@@ -53,9 +63,10 @@ function App() {
   const [reviews, setReviews] = useState<Review[]>([]),
     [positions, setPositions] = useState<Position[]>([]),
     [busy, setBusy] = useState(false),
-    [depth, setDepth] = useState(14),
+    [depth, setDepth] = useState(16),
     [progress, setProgress] = useState(0);
-  const [fullEngine, setFullEngine] = useState(false);
+  const [fullEngine, setFullEngine] = useState(true);
+  const [analysisStage, setAnalysisStage] = useState("idle");
   const [showSettings, setShowSettings] = useState(false);
   const [tab, setTab] = useState("moves"),
     [explaining, setExplaining] = useState(false),
@@ -69,13 +80,9 @@ function App() {
     move = game?.moves[ply - 1],
     review = reviews[ply - 1],
     position = positions[ply];
-  const score =
-    !variation && position
-      ? position.mate !== undefined
-        ? `M${Math.abs(position.mate)}`
-        : `${position.cp >= 0 ? "+" : ""}${(position.cp / 100).toFixed(2)}`
-      : "—";
+  const score = variation ? "—" : formatEvaluation(position);
   const changePly = (next: number) => {
+    setPlaying(false);
     setPly(Math.max(0, Math.min(game?.moves.length || 0, next)));
     setVariation(undefined);
     setSelected(undefined);
@@ -86,6 +93,7 @@ function App() {
     engine.current?.stop();
     engine.current = null;
     setBusy(false);
+    setAnalysisStage("stopped");
   }
   useEffect(
     () => () => {
@@ -119,6 +127,10 @@ function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        (e.target as HTMLElement).isContentEditable ||
         (e.target as HTMLElement).closest("input,textarea,select") ||
         importing
       )
@@ -150,6 +162,12 @@ function App() {
   function load(parsed: Game) {
     cancel();
     setGame(parsed);
+    try {
+      sessionStorage.setItem("knightlens-game", parsed.pgn);
+    } catch {}
+    setSelected(undefined);
+    setExplaining(false);
+    setAnalysisStage("idle");
     setPly(0);
     setReviews([]);
     setPositions([]);
@@ -166,51 +184,37 @@ function App() {
     const worker = new Engine(fullEngine);
     engine.current = worker;
     setBusy(true);
+    setPlaying(false);
     setError("");
     setReviews([]);
     setPositions([]);
     setProgress(0);
     setTab("moves");
+    setAnalysisStage("loading");
     try {
       await worker.init();
-      const evaluations: Position[] = [],
-        results: Review[] = [];
-      for (let i = 0; i < game.fens.length; i++) {
-        const chess = new Chess(game.fens[i]);
-        const result: Position = chess.isGameOver()
-          ? {
-              cp: chess.isCheckmate()
-                ? chess.turn() === "w"
-                  ? -10000
-                  : 10000
-                : 0,
-              mate: chess.isCheckmate() ? 0 : undefined,
-              best: "",
-              pv: [],
-              depth,
-            }
-          : await worker.evaluate(game.fens[i], depth);
+      if (run.current !== id) return;
+      setAnalysisStage("analyzing");
+      await analyzeGame(game, worker, depth, (update) => {
         if (run.current !== id) return;
-        evaluations.push(result);
-        setPositions([...evaluations]);
-        if (i) {
-          results.push(classify(game, i - 1, evaluations[i - 1], result));
-          setReviews([...results]);
-        }
-        setProgress(i / game.moves.length);
-      }
+        setPositions(update.positions);
+        setReviews(update.reviews);
+        setProgress(update.reviews.length / game.moves.length);
+      });
       if (run.current === id) {
+        setAnalysisStage("complete");
         setTab("overview");
         setBusy(false);
         worker.stop();
         engine.current = null;
       }
-    } catch (e) {
+    } catch (error) {
       if (run.current === id) {
+        setAnalysisStage("error");
         setError(
           t(
-            "Stockfish konnte die Analyse nicht abschließen. Du kannst sie erneut starten.",
-            "Stockfish could not finish the analysis. You can restart it.",
+            "Die Analyse wurde unterbrochen. Bereits ausgewertete Züge bleiben sichtbar. Prüfe die Verbindung und starte erneut.",
+            "Analysis was interrupted. Completed moves remain visible. Check your connection and start again.",
           ),
         );
         setBusy(false);
@@ -462,6 +466,9 @@ function App() {
             <div className="panel-heading">
               <ChartNoAxesCombined size={20} />
               <h2>{t("Partieanalyse", "Game review")}</h2>
+              <span className="engine-badge">
+                Stockfish 18 {fullEngine ? "NNUE" : "Lite"} · {depth}
+              </span>
               <button
                 className="settings-button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -505,8 +512,8 @@ function App() {
                       onChange={(e) => setDepth(Number(e.target.value))}
                     >
                       <option value={12}>12 · {t("Schnell", "Quick")}</option>
-                      <option value={14}>
-                        14 · {t("Standard", "Standard")}
+                      <option value={16}>
+                        16 · {t("Standard", "Standard")}
                       </option>
                       <option value={18}>18 · {t("Gründlich", "Deep")}</option>
                       <option value={22}>
@@ -521,8 +528,16 @@ function App() {
               <div className="progress" role="status">
                 <div style={{ width: `${progress * 100}%` }} />
                 <span>
-                  {t("Analysiere", "Analyzing")} {reviews.length}/
-                  {game?.moves.length} · {Math.round(progress * 100)}%
+                  {analysisStage === "loading"
+                    ? t(
+                        fullEngine
+                          ? "Lade volle Stockfish-Engine (113 MB) …"
+                          : "Lade Stockfish Lite …",
+                        fullEngine
+                          ? "Loading full Stockfish engine (113 MB) …"
+                          : "Loading Stockfish Lite …",
+                      )
+                    : `${t("Analysiere", "Analyzing")} ${reviews.length}/${game?.moves.length} · ${Math.round(progress * 100)}%`}
                 </span>
               </div>
             )}
@@ -531,6 +546,14 @@ function App() {
                 {error}
               </p>
             )}
+            {!busy &&
+              reviews.length > 0 &&
+              reviews.length < (game?.moves.length || 0) && (
+                <p className="analysis-status" role="status">
+                  {t("Teilweise analysiert", "Partially analyzed")}:{" "}
+                  {reviews.length}/{game?.moves.length}
+                </p>
+              )}
             <div className="tabs">
               <button
                 className={tab === "moves" ? "active" : ""}

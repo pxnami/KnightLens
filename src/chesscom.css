@@ -1081,3 +1081,45 @@ textarea::placeholder {
     font-size: 26px;
   }
 }
+.engine-badge {
+  font-size: 11px;
+  color: #b6b5b2;
+  margin-left: auto;
+}
+.analysis-status {
+  padding: 10px 16px;
+  color: #e5c580;
+  font-size: 12px;
+}
+.profile-result,
+.import-loading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  margin: 14px 0;
+}
+.profile-result span {
+  color: #b6b5b2;
+}
+.import-loading button {
+  padding: 6px 10px;
+  background: #454440;
+  border-radius: 4px;
+}
+.load-older {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+}
+@media (max-width: 520px) {
+  .profile-result {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .engine-badge {
+    font-size: 10px;
+  }
+}

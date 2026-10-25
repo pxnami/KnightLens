@@ -23,7 +23,7 @@ Import a PGN or find your recent public games on Chess.com and Lichess. KnightLe
 | Import | Understand | Explore |
 | --- | --- | --- |
 | Paste PGN or open a PGN file | Ten move categories, from Brilliant to Blunder | Replay with buttons or arrow keys |
-| Browse up to 20 recent public games | Accuracy estimates for both players | Flip the board and show the best move |
+| Browse public games and load older ones | Accuracy estimates for both players | Flip the board and show the best move |
 | Select games from multi-game PGN files | Position-based coach and engine continuations | Try legal moves and return to the game |
 | Chess.com and Lichess profiles | Clickable evaluation graph and category counts | Export the imported PGN |
 
@@ -35,13 +35,13 @@ The interface follows the requested Chess.com review layout with Neo pieces, the
 
 ## Analysis
 
-Stockfish.js **18.0.8**, implementing **Stockfish 18**, runs in a Web Worker. The default single-threaded Lite engine downloads about 7 MB. Enable **Full NNUE** before starting analysis to use the full engine, which downloads about 113 MB. Both builds work on GitHub Pages without cross-origin isolation headers. Search depth is selectable: 12, 14, 18, or 22.
+Stockfish.js **18.0.8**, implementing **Stockfish 18**, runs in a Web Worker. The default single-threaded **Full NNUE** engine downloads about 113 MB. Select Lite for a smaller download of about 7 MB. Both builds work on GitHub Pages without cross-origin isolation headers. Search depth is selectable: 12, 16 (default), 18, or 22.
 
 Chess.com identifies Stockfish 18 as its current engine in its [engine documentation](https://support.chess.com/en/articles/9462780-how-do-the-chess-engines-on-chess-com-work). Sharing the engine version does not make the results identical: hardware, search depth, engine build and classification methods matter.
 
-Move categories and accuracy are **independent estimates**, not Chess.com scores. Classification uses evaluation loss, a logistic winning-chance estimate, the engine's preferred move and second candidate, a conservative sacrifice heuristic, and a small bundled opening repertoire. Brilliant detects a preferred move offering a higher-value piece for capture while preserving the evaluation; it does not prove a forced sacrifice. Book only recognizes bundled opening prefixes. Accuracy averages a bounded exponential transformation of winning-chance loss. Coach explanations are deterministic and based on actual moves, engine lines and board features; no external AI service is used.
+Move categories and accuracy are **independent estimates**, not Chess.com scores. The played move and preferred alternative are evaluated from the same root position, including game history. Classification uses evaluation loss, a logistic winning-chance estimate, the engine's preferred move and second candidate, a conservative sacrifice heuristic, and a small bundled opening repertoire. Brilliant detects a preferred move offering a higher-value piece for capture while preserving the evaluation; it does not prove a forced sacrifice. Book only recognizes bundled opening prefixes. Accuracy averages a bounded exponential transformation of winning-chance loss. Coach explanations are deterministic and based on actual moves, engine lines and board features; no external AI service is used.
 
-Public profile requests go directly to the respective platform. Chess.com searches the three latest available archive months, stopping after enough games are found. Lichess exports the latest 20 finished standard games. Rate limits, upstream availability and browser network restrictions can affect imports; PGN import works independently. PGN analysis stays on-device. Only the selected interface language is stored locally.
+Public profile requests go directly to the respective platform. Both platforms load finished standard games in pages of 20, with an option to load older games. Chess.com searches all available archive months and checks the current month. Switching platforms or editing the profile cancels the previous search. Rate limits, upstream availability and browser network restrictions can affect imports; PGN import works independently. PGN analysis stays on-device. The interface language is stored locally. The last profile and imported PGN are stored in session storage for this browser tab; analysis results are recalculated after a reload.
 
 ## Run locally
 

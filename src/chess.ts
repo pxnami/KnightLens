@@ -39,6 +39,7 @@ export type Review = {
   accuracy: number;
   before: Position;
   after: Position;
+  played?: Position;
 };
 export type Game = {
   pgn: string;
@@ -61,8 +62,10 @@ export function parseGame(pgn: string): Game {
 }
 export function splitPgn(text: string) {
   return text
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n")
     .trim()
-    .split(/\n\s*\n(?=\s*\[Event\s)/)
+    .split(/\n\s*(?=\[Event\s)/)
     .filter(Boolean);
 }
 const openingLines = [
@@ -80,30 +83,32 @@ export function classify(
   index: number,
   before: Position,
   after: Position,
+  played?: Position,
 ): Review {
   const move = game.moves[index],
     sign = move.color === "w" ? 1 : -1;
   const start = before.cp * sign,
-    end = after.cp * sign;
-  const loss = Math.max(0, start - end);
-  const win = (cp: number) => 100 / (1 + Math.exp(-cp / 250));
-  const swing = Math.max(0, win(start) - win(end));
+    end = (played?.cp ?? after.cp) * sign;
   const exact = before.best === move.from + move.to + (move.promotion || "");
+  const loss = exact ? 0 : Math.max(0, start - end);
+  const win = (cp: number) => 100 / (1 + Math.exp(-cp / 250));
+  const swing = exact ? 0 : Math.max(0, win(start) - win(end));
+  const nextMate = played ? played.mate : after.mate;
   let category: Category =
-    swing >= 20 || loss >= 300
+    swing >= 20
       ? "blunder"
-      : swing >= 10 || loss >= 150
+      : swing >= 10
         ? "mistake"
-        : swing >= 5 || loss >= 70
+        : swing >= 5
           ? "inaccuracy"
-          : loss <= 12
+          : swing <= 1.5
             ? "excellent"
             : "good";
   if (
-    (start >= 150 && end < 50 && loss >= 150) ||
+    (start >= 150 && end < 50 && swing >= 10) ||
     (before.mate &&
       before.mate * sign > 0 &&
-      !(after.mate && after.mate * sign > 0) &&
+      !(nextMate !== undefined && nextMate * sign > 0) &&
       end < 250)
   )
     category = "miss";
@@ -113,6 +118,8 @@ export function classify(
     .map((m) => m.san)
     .join(" ");
   if (
+    game.fens[0] === new Chess().fen() &&
+    loss < 50 &&
     openingLines.some(
       (line) => line === sequence || line.startsWith(sequence + " "),
     )
@@ -127,15 +134,27 @@ export function classify(
     q: 9,
     k: 100,
   };
-  const sacrificed =
-    position
+  const sacrificed = position.moves({ verbose: true }).some((reply) => {
+    if (reply.to !== move.to || !reply.captured) return false;
+    const continuation = new Chess(move.after);
+    continuation.move({
+      from: reply.from,
+      to: reply.to,
+      promotion: reply.promotion,
+    });
+    const recapture = continuation
       .moves({ verbose: true })
-      .some((reply) => reply.to === move.to && !!reply.captured) &&
-    values[move.piece] > (move.captured ? values[move.captured] : 0) + 1;
+      .some((response) => response.to === reply.to && !!response.captured);
+    const materialChange =
+      (move.captured ? values[move.captured] : 0) -
+      values[move.piece] +
+      (recapture ? values[reply.piece] : 0);
+    return materialChange < -1;
+  });
   if (
     exact &&
     before.second !== undefined &&
-    start - before.second * sign > 120 &&
+    win(start) - win(before.second * sign) > 10 &&
     category !== "book"
   )
     category = "great";
@@ -145,6 +164,8 @@ export function classify(
     loss <= 25 &&
     end >= -50 &&
     move.piece !== "k" &&
+    move.piece !== "p" &&
+    new Chess(move.before).moves().length > 1 &&
     category !== "book"
   )
     category = "brilliant";
@@ -157,7 +178,15 @@ export function classify(
     ),
     before,
     after,
+    played,
   };
+}
+export function formatEvaluation(position?: Position) {
+  if (!position) return "—";
+  if (position.mate === 0) return "#";
+  if (position.mate !== undefined)
+    return `${position.mate > 0 ? "+" : "−"}M${Math.abs(position.mate)}`;
+  return `${position.cp >= 0 ? "+" : "−"}${(Math.abs(position.cp) / 100).toFixed(2)}`;
 }
 export function lineSan(fen: string, pv: string[]) {
   const chess = new Chess(fen);
